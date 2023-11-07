@@ -67,7 +67,7 @@ def countdown(m):
     total_seconds =  m * 60
  
     # cria a janela
-    window = sg.Window('Title not seen', layout_timer, location=(-500,0), no_titlebar=True, margins=(0, 0), element_padding=(0, 0), right_click_menu=sg.MENU_RIGHT_CLICK_EXIT,
+    window = sg.Window('Title not seen', layout_timer, location=(2000,0), no_titlebar=True, margins=(0, 0), element_padding=(0, 0), right_click_menu=sg.MENU_RIGHT_CLICK_EXIT,
                    keep_on_top=True, font='_ 96', finalize=True)
     window.Maximize() 
 
@@ -144,12 +144,11 @@ def alarm(timer: datetime, minutes):
             return
         time.sleep(5)
 
-#countdown(1)
-
 
 timer_info = prompt_time()
 
 if timer_info:
+    sg.popup_auto_close("timer programado")
     alarm(timer_info[0], timer_info[1])
 
 
