@@ -1,10 +1,9 @@
 from threading import Thread
 import PySimpleGUI as sg
 from datetime import datetime, timedelta
+import win32gui, win32con
 import time
 import sys
-
-
 
 
 #--------- layout da janela do timer---------#
@@ -20,11 +19,11 @@ layout_timer = [
     [sg.Push(), sg.Column(column, justification='center'), sg.Push()],
     [sg.VPush()]
 ]
-#-------------------------------------------#
+#----------layout do programador-------------#
 
 sg.theme('SystemDefaultForReal')
 horas = list(range(0,24))
-minutos = list(range(0,60))
+minutos = list(range(0,60, 1))
 layout_prompt = [
     [sg.Text("Programar timer da reunião")],
     [sg.Text("Hora de início", font='_ 12')],
@@ -34,6 +33,13 @@ layout_prompt = [
     [sg.Button("Cancelar", font='_ 12', key="-cancel-"), sg.HSeparator(), sg.Button("Programar", font='_ 12', key="-set-")]
 ]
 
+#----------layout do gerenciador do timer-------------#
+
+sg.theme('SystemDefaultForReal')
+layout_manager = [
+    [sg.Text("Timer rodando")],
+    [sg.Button("Fechar timer", key="-close-")]
+]
 
 def timedelta_formatter(td):                             
     td_sec = td.seconds
@@ -43,6 +49,7 @@ def timedelta_formatter(td):
 
 
 def update_time(window, total_seconds):
+    window.keep_on_top_set()
     # checagem do tempo
     while total_seconds > 0:
  
@@ -51,6 +58,7 @@ def update_time(window, total_seconds):
 
         # mostra o tempo restante
         window['-OUT-'].update(timer)
+        window.bring_to_front()
 
         # dá uma pausa de 1 segundo
         time.sleep(1)
@@ -60,30 +68,49 @@ def update_time(window, total_seconds):
     return
 
 
+def foreground( hwnd, ctx ):
+    if win32gui.IsWindowVisible( hwnd ):
+        nome = win32gui.GetWindowText(hwnd).strip().lower()
+        if  nome == "timer screen" or nome == "title not seen":
+            win32gui.SetForegroundWindow(hwnd)
+        #print ( hex( hwnd ), win32gui.GetWindowText( hwnd ) )
+
+
 def countdown(m):
  
-    sg.theme('black')
     # Calcula o tempo total em segundos
     total_seconds =  m * 60
- 
-    # cria a janela
-    window = sg.Window('Title not seen', layout_timer, location=(2000,0), no_titlebar=True, margins=(0, 0), element_padding=(0, 0), right_click_menu=sg.MENU_RIGHT_CLICK_EXIT,
+    
+    #cria a janela do gerenciardor
+    sg.theme('SystemDefaultForReal')
+    window_m = sg.Window('Gerenciador do timer', layout_manager, font='_ 16', finalize=True)
+
+    # cria a janela do timer
+    screen_size = sg.Window.get_screen_size()
+    sg.theme('black')
+    window_t = sg.Window('Title not seen', layout_timer, location=(screen_size[0],0), no_titlebar=True,
                    keep_on_top=True, font='_ 96', finalize=True)
-    window.Maximize() 
-
+    window_t.Maximize() 
+    
+    # move a janela para frente
+    win32gui.EnumWindows(foreground, None)
+    
     #cria nova thread para paralelismo
-    timer = Thread(target=update_time, args=[window, total_seconds])
+    timer = Thread(target=update_time, args=[window_t, total_seconds])
     timer.start()
-
+    window_t.keep_on_top_set()
     while True:
          # lê os eventos da janela
-        event, values = window.read(timeout=100)
-        if event == sg.WIN_CLOSED or event == 'Exit' or not timer.is_alive():
+        event_m, value_m = window_m.read(timeout=100)
+        event_t, values_t = window_t.read(timeout=100)
+        if event_m == sg.WIN_CLOSED or event_m == "-close-" or event_t == sg.WIN_CLOSED or not timer.is_alive():
             break
-
-    window.close()
+    
+    window_t.close()
+    window_m.close()
 
     print("fechou")
+    sys.exit()
 
 
 def prompt_time():
@@ -107,7 +134,7 @@ def prompt_time():
                 continue
             
             window.close()
-            return start_time, values["-time-"]
+            return start_time, values["-time-"], f"{values['-hour-']:02d}:{values['-min-']:02d}"
     
     return False
 
@@ -145,10 +172,11 @@ def alarm(timer: datetime, minutes):
         time.sleep(5)
 
 
+#countdown(1)
 timer_info = prompt_time()
 
 if timer_info:
-    sg.popup_auto_close("timer programado")
+    sg.popup_auto_close(f"timer programado para começar às \n{timer_info[0].strftime('%H:%M')}\nE terminar às\n{timer_info[2]}")
     alarm(timer_info[0], timer_info[1])
 
 
