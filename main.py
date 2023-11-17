@@ -1,7 +1,7 @@
 from threading import Thread
 import PySimpleGUI as sg
 from datetime import datetime, timedelta
-import win32gui, win32con
+import os
 import time
 import sys
 
@@ -49,7 +49,9 @@ def timedelta_formatter(td):
 
 
 def update_time(window, total_seconds):
-    window.keep_on_top_set()
+    #window.keep_on_top_set()
+    os.system('nircmd win activate title "Timer count"')
+    os.system('nircmd win max title "Timer count"')
     # checagem do tempo
     while total_seconds > 0:
  
@@ -68,12 +70,12 @@ def update_time(window, total_seconds):
     return
 
 
-def foreground( hwnd, ctx ):
-    if win32gui.IsWindowVisible( hwnd ):
-        nome = win32gui.GetWindowText(hwnd).strip().lower()
-        if  nome == "timer screen" or nome == "title not seen":
-            win32gui.SetForegroundWindow(hwnd)
-        #print ( hex( hwnd ), win32gui.GetWindowText( hwnd ) )
+#def foreground( hwnd, ctx ):
+#    if win32gui.IsWindowVisible( hwnd ):
+#        nome = win32gui.GetWindowText(hwnd).strip().lower()
+#        if  nome == "timer screen" or nome == "title not seen":
+#            win32gui.SetForegroundWindow(hwnd)
+#        #print ( hex( hwnd ), win32gui.GetWindowText( hwnd ) )
 
 
 def countdown(m):
@@ -88,12 +90,12 @@ def countdown(m):
     # cria a janela do timer
     screen_size = sg.Window.get_screen_size()
     sg.theme('black')
-    window_t = sg.Window('Title not seen', layout_timer, location=(screen_size[0],0), no_titlebar=True,
+    window_t = sg.Window('Timer count', layout_timer, location=(screen_size[0],0), no_titlebar=True,
                    keep_on_top=True, font='_ 96', finalize=True)
     window_t.Maximize() 
     
     # move a janela para frente
-    win32gui.EnumWindows(foreground, None)
+    #win32gui.EnumWindows(foreground, None)
     
     #cria nova thread para paralelismo
     timer = Thread(target=update_time, args=[window_t, total_seconds])
@@ -172,7 +174,7 @@ def alarm(timer: datetime, minutes):
         time.sleep(5)
 
 
-#countdown(1)
+countdown(1)
 timer_info = prompt_time()
 
 if timer_info:
