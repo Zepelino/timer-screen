@@ -38,6 +38,7 @@ layout_prompt = [
 sg.theme('SystemDefaultForReal')
 layout_manager = [
     [sg.Text("Timer rodando")],
+    [sg.Text("Favor voltar o JW para o primeiro plano após o timer", font="_ 11")],
     [sg.Button("Fechar timer", key="-close-")]
 ]
 
@@ -171,10 +172,10 @@ def alarm(timer: datetime, minutes):
             print("já passou")
             sg.popup("O tempo já passou", title="timeout")
             return
-        time.sleep(5)
+        time.sleep(1)
 
 
-countdown(1)
+#countdown(0.1)
 timer_info = prompt_time()
 
 if timer_info:
